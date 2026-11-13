@@ -37,6 +37,12 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14
 header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px 24px}
 nav.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .theme{flex:none}
+.iconbtn{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13.5px;font-weight:500;padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.iconbtn svg{width:16px;height:16px;flex:none}
+.iconbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.layout.noside{grid-template-columns:minmax(0,1fr)}
+.phead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.phead h2{min-width:0}
 .theme button{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;font-size:13px}
 .theme svg{width:15px;height:15px;flex:none}
 h1{font-family:var(--f-display);font-weight:700;font-size:clamp(20px,3vw,28px);margin:0;letter-spacing:-.01em;text-wrap:balance}
@@ -67,7 +73,9 @@ thead th.room{z-index:3}
 td{min-width:96px;height:52px}
 td.free{background:var(--free)}
 td.sel{box-shadow:inset 0 0 0 2px var(--accent)}
-.cell{padding:5px 7px;height:100%;display:flex;flex-direction:column;gap:1px}
+.cell{padding:5px 7px;display:flex;flex-direction:column;gap:1px}
+td>.cell:only-child{min-height:100%;height:100%}
+td>.cell+.cell{border-top:2px solid var(--surface)}
 .cls{font-weight:700;font-size:12.5px;line-height:1.2}
 .sbj{font-size:12px;line-height:1.2;opacity:.85}
 .chip{align-self:flex-start;font-size:10px;font-weight:600;letter-spacing:.03em;padding:0 5px;border-radius:4px;border:1px solid currentColor;opacity:.75;margin-top:2px}
@@ -112,7 +120,7 @@ aside.side{position:sticky;top:max(12px,env(safe-area-inset-top,0px));max-height
 .rrow{display:grid;grid-template-columns:1fr repeat(3,52px);gap:4px;align-items:center;padding:4px 2px;border-top:1px solid var(--line)}
 .rrow .nm{min-width:0;font-size:12.5px;line-height:1.2}
 .rrow .nm b{font-family:var(--f-mono);font-weight:500;font-size:12.5px}
-.rrow .nm span{color:var(--muted);font-size:11.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .nm span{color:var(--muted);font-size:11.5px;display:block;overflow-wrap:anywhere}
 .rrow.st-off .nm{color:var(--muted)}
 .rrow.st-off .nm b{text-decoration:line-through}
 .rst{appearance:none;border:1px solid var(--line);background:var(--surface);width:22px;height:22px;border-radius:50%;justify-self:center;cursor:pointer;display:grid;place-items:center;padding:0}
@@ -161,7 +169,8 @@ td.tgt.over{box-shadow:inset 0 0 0 2px var(--accent)}
 .cell.it{cursor:grab;border:0;font:inherit;text-align:left;width:100%;position:relative}
 .cell.it:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .cell.it.picked{box-shadow:inset 0 0 0 3px var(--accent)}
-.undo{position:absolute;top:3px;right:4px;font:inherit;font-size:12px;line-height:1;border:0;border-radius:4px;padding:2px 4px;background:var(--surface);color:var(--accent);cursor:pointer;opacity:.9}
+.cell.it.hasundo{padding-right:24px}
+.undo{position:absolute;top:3px;right:3px;font:inherit;font-size:12px;line-height:1;border:0;border-radius:4px;padding:2px 4px;background:var(--surface);color:var(--accent);cursor:pointer;opacity:.9}
 .hint{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--accent-soft);color:var(--fg);border-radius:10px;padding:10px 14px;font-size:13px}
 .hint[hidden]{display:none!important}
 .btn{font:inherit;font-weight:600;font-size:13px;padding:7px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer}
@@ -192,9 +201,9 @@ textarea#impText{width:100%;min-height:140px;font:12px/1.4 var(--f-mono);padding
 <div class="wrap">
 <header>
   <div>
-    <div class="eyebrow">Ліцей імені М. Грушевського · 2026/2027 · основний розклад</div>
+    <div class="eyebrow">Ліцей імені М. Грушевського · інструмент заступника директора</div>
     <h1>Кабінетна схема</h1>
-    <p class="sub">Розстановка уроків по кабінетах на час ремонту. Тиждень 9–13 листопада.</p>
+    <p class="sub">Розстановка уроків по кабінетах, коли частина кабінетів недоступна.</p>
   </div>
   <div class="seg theme" role="group" aria-label="Тема інтерфейсу" id="theme">
     <button data-t="auto" aria-pressed="true" title="Як у системі"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg>Авто</button>
@@ -203,6 +212,7 @@ textarea#impText{width:100%;min-height:140px;font:12px/1.4 var(--f-mono);padding
   </div>
 </header>
 <nav class="controls" aria-label="Перегляд">
+    <button class="iconbtn" id="sideBtn" aria-controls="cfgPanel" aria-expanded="true"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6 2.5v11" stroke="currentColor" stroke-width="1.5"/><rect x="2.3" y="3.3" width="3" height="9.4" fill="currentColor" opacity=".35"/></svg><span id="sideLbl">Сховати панель</span></button>
     <div class="seg" role="group" aria-label="Режим" id="mode">
       <button data-m="day" aria-pressed="true">По днях</button>
       <button data-m="room" aria-pressed="false">Кабінет на тиждень</button>
@@ -214,15 +224,16 @@ textarea#impText{width:100%;min-height:140px;font:12px/1.4 var(--f-mono);padding
     <select id="roomSel" aria-label="Кабінет" hidden></select>
     <select id="tSel" aria-label="Учитель" hidden></select>
     <select id="cSel" aria-label="Клас" hidden></select>
+    <label class="chk" id="onlyChgLbl" hidden><input type="checkbox" id="onlyChg">Лише зі змінами</label>
 </nav>
 
-<div class="layout">
+<div class="layout" id="layout">
 <aside class="side" id="cfgPanel" aria-label="Налаштування">
   <details class="sbox" id="sbPlan" open>
     <summary>Схема</summary>
     <div class="sbody">
       <button class="sbtn primary" id="baseBtn">Повернутися до основної схеми</button>
-      <p id="baseNote">Основна схема — розстановка, затверджена 12 листопада.</p>
+      <p id="baseNote">Основна схема — затверджена розстановка, до якої можна повернутися.</p>
       <button class="sbtn" id="saveBaseBtn">Зробити поточну схему основною</button>
       <button class="sbtn" id="clearBtn">Скинути кабінетну схему</button>
     </div>
@@ -242,7 +253,7 @@ textarea#impText{width:100%;min-height:140px;font:12px/1.4 var(--f-mono);padding
       <label class="sbtn" for="csvFile">Імпорт схеми з CSV</label>
       <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
       <button class="sbtn" id="impOpen">Оновити розклад з «Нової школи»</button>
-      <p id="ttNote">Розклад: тиждень 9–13 листопада.</p>
+      <p id="ttNote">Розклад узято з «Нової школи» (вигляд «За аудиторіями»).</p>
     </div>
   </details>
 </aside>
@@ -323,9 +334,9 @@ const FULLNAME={"Андрей":"Андрейченко Л.Є.","Пашник":"�
 const tname=t=>FULLNAME[t]||t;
 setData(D);
 
-const ui={showOff:false,mode:"day",day:(()=>{const g=new Date().getDay();return g>=1&&g<=5?g-1:0})(),room:"№29",sel:null,msg:""};
-try{const s=JSON.parse(localStorage.getItem("kab-ui")||"null");if(s){if(["day","room","load","teacher","class"].includes(s.mode))ui.mode=s.mode;if(s.t)ui.t=s.t;ui.showOff=!!s.showOff;if(s.c)ui.c=s.c;if(ROOMS.includes(s.room))ui.room=s.room}}catch(e){}
-const saveUi=()=>{try{localStorage.setItem("kab-ui",JSON.stringify({mode:ui.mode,room:ui.room,t:ui.t,c:ui.c,showOff:ui.showOff}))}catch(e){}};
+const ui={side:true,onlyChg:false,showOff:false,mode:"day",day:(()=>{const g=new Date().getDay();return g>=1&&g<=5?g-1:0})(),room:"№29",sel:null,msg:""};
+try{const s=JSON.parse(localStorage.getItem("kab-ui")||"null");if(s){if(["day","room","load","teacher","class"].includes(s.mode))ui.mode=s.mode;if(s.t)ui.t=s.t;ui.showOff=!!s.showOff;ui.onlyChg=!!s.onlyChg;ui.side=s.side!==false;if(s.c)ui.c=s.c;if(ROOMS.includes(s.room))ui.room=s.room}}catch(e){}
+const saveUi=()=>{try{localStorage.setItem("kab-ui",JSON.stringify({mode:ui.mode,room:ui.room,t:ui.t,c:ui.c,showOff:ui.showOff,onlyChg:ui.onlyChg,side:ui.side}))}catch(e){}};
 
 // план: вимкнені, захищені, переміщення {ключ уроку: кабінет}
 let plan={off:[...DEF_OFF],prot:[...DEF_PROT],moves:{}};
@@ -376,7 +387,7 @@ function itemHTML(it,interactive,inRoom){
   if(!interactive)return `<div class="cell" style="${style}">${lines}${chip}</div>`;
   const picked=ui.sel===it.key?" picked":"";
   const undo=isMoved?`<span class="undo" role="button" tabindex="0" data-undo="${esc(it.key)}" title="Повернути на місце з розкладу" aria-label="Повернути">↺</span>`:"";
-  return `<button class="cell it${isUn?" un":""}${picked}" draggable="true" data-k="${esc(it.key)}" style="${style}" aria-pressed="${!!picked}">${lines}${chip}${undo}</button>`;
+  return `<button class="cell it${isUn?" un":""}${isMoved?" hasundo":""}${picked}" draggable="true" data-k="${esc(it.key)}" style="${style}" aria-pressed="${!!picked}">${lines}${chip}${undo}</button>`;
 }
 const AV=()=>ROOMS.filter(r=>!plan.off.includes(r));
 function roomTh(r){return `<th class="room" scope="row"><span class="rn">${esc(r)}</span>${nm(r)?`<span class="rh">${esc(nm(r))}</span>`:""}</th>`}
@@ -407,7 +418,7 @@ function renderDay(){
 function renderRoom(){
   const r=ui.room;
   let h=`<div class="tablebox"><table class="week"><thead><tr><th class="room">Урок</th>`;
-  DAYS.forEach((n,i)=>h+=`<th><span class="n">${n}</span> ${DATES[i]}</th>`);
+  DAYS.forEach(n=>h+=`<th><span class="n">${n}</span></th>`);
   h+="</tr></thead><tbody>";
   L.forEach(l=>{h+=`<tr><th class="room" scope="row"><span class="rn">${l} урок</span></th>`;
     for(let d=0;d<5;d++){const its=map[K(r,d,l)];h+=plan.off.includes(r)?`<td><div class="cell off"><span class="sbj">вимкнено</span></div></td>`:`<td class="${its?"":"free"}">${its?its.map(it=>itemHTML(it,false,r)).join(""):""}</td>`}h+="</tr>"});
@@ -514,7 +525,7 @@ const isMoved=it=>!!plan.moves[it.key]&&where[it.key]===plan.moves[it.key];
 const roomOf=it=>where[it.key]||null;
 function weekGrid(cellFn){
   let h=`<div class="tablebox"><table class="week"><thead><tr><th class="room">Урок</th>`;
-  DAYS.forEach((n,i)=>h+=`<th><span class="n">${n}</span> ${DATES[i]}</th>`);
+  DAYS.forEach(n=>h+=`<th><span class="n">${n}</span></th>`);
   h+="</tr></thead><tbody>";
   L.forEach(l=>{let row="",any=false;for(let d=0;d<5;d++){const c=cellFn(d,l);if(c)any=true;row+=`<td class="${c?"":"free"}">${c}</td>`}
     if(any||l<=7)h+=`<tr><th class="room" scope="row"><span class="rn">${l} урок</span></th>${row}</tr>`});
@@ -536,24 +547,26 @@ const changedTeachers=()=>TEACHERS.filter(t=>teacherItems(t).some(it=>isMoved(it
 function renderTeacher(){
   if(!TEACHERS.includes(ui.t))ui.t=changedTeachers()[0]||TEACHERS[0];
   const ch=new Set(changedTeachers());
-  tSel.innerHTML=`<optgroup label="Зі змінами">${TEACHERS.filter(t=>ch.has(t)).map(t=>`<option value="${esc(t)}">${esc(tname(t))}</option>`).join("")}</optgroup><optgroup label="Без змін">${TEACHERS.filter(t=>!ch.has(t)).map(t=>`<option value="${esc(t)}">${esc(tname(t))}</option>`).join("")}</optgroup>`;
+  if(ui.onlyChg&&ch.size&&!ch.has(ui.t))ui.t=[...ch][0];
+  tSel.innerHTML=`<optgroup label="Зі змінами (${ch.size})">${TEACHERS.filter(t=>ch.has(t)).map(t=>`<option value="${esc(t)}">${esc(tname(t))}</option>`).join("")}</optgroup>`+(ui.onlyChg?"":`<optgroup label="Без змін">${TEACHERS.filter(t=>!ch.has(t)).map(t=>`<option value="${esc(t)}">${esc(tname(t))}</option>`).join("")}</optgroup>`);
   tSel.value=ui.t;
   const t=ui.t,its=teacherItems(t);
   const at={};its.forEach(it=>{(at[it.d+"|"+it.l]=at[it.d+"|"+it.l]||[]).push(it)});
   const tr=transitions(t);
-  view.innerHTML=`<div class="panel"><h2>${esc(tname(t))}: ${its.length} уроків, змінено ${its.filter(isMoved).length}</h2>${tr.length?`<div class="trans"><span class="rl">Нові переходи: за розкладом два уроки поспіль в одному кабінеті, тепер у різних · ${tr.length}</span>${tr.map(([a,b])=>`<div class="trow"><span class="rl">${DS[a.d]}, ${a.l}→${b.l} ур.</span><span>${esc(roomOf(a))} → ${esc(roomOf(b))} <span class="rh">(${esc(short(a.v[0][0]))} → ${esc(short(b.v[0][0]))})</span></span></div>`).join("")}</div>`:'<span class="rh">Нових переходів між кабінетами немає: де за розкладом два уроки поспіль в одному кабінеті, там так і лишилося.</span>'}</div>`+
+  view.innerHTML=`<div class="panel"><div class="phead"><h2>${esc(tname(t))}: ${its.length} уроків, змінено ${its.filter(isMoved).length}</h2><button class="btn ghost" data-png="teacher">Завантажити PNG</button></div>${tr.length?`<div class="trans"><span class="rl">Нові переходи: за розкладом два уроки поспіль в одному кабінеті, тепер у різних · ${tr.length}</span>${tr.map(([a,b])=>`<div class="trow"><span class="rl">${DS[a.d]}, ${a.l}→${b.l} ур.</span><span>${esc(roomOf(a))} → ${esc(roomOf(b))} <span class="rh">(${esc(short(a.v[0][0]))} → ${esc(short(b.v[0][0]))})</span></span></div>`).join("")}</div>`:'<span class="rh">Нових переходів між кабінетами немає: де за розкладом два уроки поспіль в одному кабінеті, там так і лишилося.</span>'}</div>`+
     weekGrid((d,l)=>(at[d+"|"+l]||[]).map(it=>{const g=grade(it.v[0][0]);const cl=[...new Set(it.v.filter(x=>x[2]===t).map(x=>short(x[0])))].join(" + ");
       return `<div class="cell" style="background:var(--g${g});color:var(--gi${g})"><span class="cls">${esc(cl)}</span><span class="sbj">${esc(it.v[0][1])}</span>${roomLine(it)}</div>`}).join(""));
 }
 function renderClass(){
   if(!CLASSES.includes(ui.c))ui.c=CLASSES[0];
-  cSel.innerHTML=CLASSES.map(c=>`<option value="${esc(c)}">${esc(short(c))}</option>`).join("");cSel.value=ui.c;
+  const cc=new Set(changedClasses());if(ui.onlyChg&&cc.size&&!cc.has(ui.c))ui.c=[...cc][0];
+  cSel.innerHTML=CLASSES.filter(c=>!ui.onlyChg||cc.has(c)).map(c=>`<option value="${esc(c)}">${esc(short(c))}${cc.has(c)?" •":""}</option>`).join("");cSel.value=ui.c;
   const c=ui.c,its=classItems(c),g=grade(c);
   const at={};its.forEach(it=>{(at[it.d+"|"+it.l]=at[it.d+"|"+it.l]||[]).push(it)});
   const home=homeOf[c];
   const guests=home?Object.values(ITEMS).filter(it=>where[it.key]===home&&it.room!==home).sort((a,b)=>a.d-b.d||a.l-b.l):[];
   const chg=its.filter(it=>isMoved(it)||!roomOf(it));
-  view.innerHTML=`<div class="panel"><h2>${esc(short(c))}${home?" · класний кабінет "+esc(home):""}</h2>
+  view.innerHTML=`<div class="panel"><div class="phead"><h2>${esc(short(c))}${home?" · класний кабінет "+esc(home):""}</h2><button class="btn ghost" data-png="class">Завантажити PNG</button></div>
     <div><span class="rl">Уроки класу в інших кабінетах через зміни · ${chg.length}</span>${chg.length?`<div class="mlist">${chg.map(it=>`<div class="mv-row"><span class="rl">${DS[it.d]}, ${it.l} ур.</span><span>${esc(it.v[0][1])}${it.v[0][2]?" · "+esc(tname(it.v.find(x=>x[0]===c)[2])):""}</span><span class="rn">${esc(it.room)} → ${esc(roomOf(it)||"—")}</span></div>`).join("")}</div>`:'<div class="rh">немає</div>'}</div>
     ${home?`<div><span class="rl">Інші групи й учителі в кабінеті ${esc(home)} · ${guests.length}</span>${guests.length?`<div class="mlist">${guests.map(it=>`<div class="mv-row"><span class="rl">${DS[it.d]}, ${it.l} ур.</span><span>${esc(itName(it))}</span><span class="rn">з ${esc(it.room)}</span></div>`).join("")}</div>`:'<div class="rh">немає</div>'}</div>`:""}</div>`+
     weekGrid((d,l)=>(at[d+"|"+l]||[]).map(it=>{const x=it.v.filter(y=>y[0]===c);
@@ -568,10 +581,80 @@ function classText(c){const home=homeOf[c];let s=`${short(c)} — зміни к�
   if(home){const g=Object.values(ITEMS).filter(it=>where[it.key]===home&&it.room!==home).sort((a,b)=>a.d-b.d||a.l-b.l);
     s+=`\nУ кабінеті ${home} працюють інші групи:\n`+(g.length?g.map(it=>`  ${DS[it.d]}, ${it.l} урок · ${itName(it)}`).join("\n"):"  немає")+"\n"}
   return s}
+// ---- PNG розкладу вчителя чи класу ----
+const PNGC={bg:"#FFFFFF",fg:"#1B2320",muted:"#5F6B66",line:"#DDE2DE",accent:"#8A1F2E",free:"#F3F5F2",
+  g:{5:"#E3EEFB",6:"#E2F4EC",7:"#FBF0DA",8:"#F1E6F8",9:"#FCE6DE",10:"#E1F2F4",11:"#ECEBE3"},gi:{5:"#2F5F9E",6:"#2C7A57",7:"#93650F",8:"#6D3E92",9:"#A4452B",10:"#1F6E78",11:"#5E5A44"}};
+function pngEntries(kind,id){
+  const its=kind==="teacher"?teacherItems(id):classItems(id);
+  return its.map(it=>{const r=roomOf(it),mv=isMoved(it);
+    const a=kind==="teacher"?[...new Set(it.v.filter(x=>x[2]===id).map(x=>short(x[0])))].join(" + "):it.v.find(x=>x[0]===id)[1];
+    const b=kind==="teacher"?it.v[0][1]:[...new Set(it.v.filter(x=>x[0]===id).map(x=>tname(x[2])))].join(", ");
+    return {d:it.d,l:it.l,g:grade(it.v[0][0]),a,b,room:r?(tag(r)):"без кабінету",old:mv||!r?it.room:null,chg:mv||!r}});
+}
+function wrapText(ctx,text,maxW){const words=String(text).split(" ");const lines=[];let cur="";
+  words.forEach(w=>{const t=cur?cur+" "+w:w;if(ctx.measureText(t).width<=maxW||!cur)cur=t;else{lines.push(cur);cur=w}});if(cur)lines.push(cur);
+  return lines.flatMap(ln=>{if(ctx.measureText(ln).width<=maxW)return [ln];let out=[],s="";for(const ch of ln){if(ctx.measureText(s+ch).width>maxW&&s){out.push(s);s=ch}else s+=ch}if(s)out.push(s);return out})}
+function buildPng(kind,id){
+  const F='"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif',M='"JetBrains Mono",ui-monospace,Menlo,monospace';
+  const ents=pngEntries(kind,id);const maxL=Math.max(...ents.map(e=>e.l),5);const lessons=[];for(let l=1;l<=maxL;l++)lessons.push(l);
+  const W=1400,pad=40,c0=90,cw=(W-pad*2-c0)/5,cp=10,S=2;
+  const cv=document.createElement("canvas"),ctx=cv.getContext("2d");
+  const fA="700 17px "+F,fB="400 15px "+F,fR="600 15px "+M,fO="400 13px "+M,lhA=22,lhB=20,lhR=20,gapE=10;
+  function cellLayout(list){let hgt=0;const blocks=list.map(e=>{
+      ctx.font=fA;const la=wrapText(ctx,e.a,cw-cp*2);ctx.font=fB;const lb=e.b?wrapText(ctx,e.b,cw-cp*2):[];ctx.font=fR;const lr=wrapText(ctx,e.room,cw-cp*2);
+      const lo=e.old?["замість "+e.old]:[];const bh=la.length*lhA+lb.length*lhB+lr.length*lhR+lo.length*18+cp*2;hgt+=bh;return {e,la,lb,lr,lo,bh}});
+    return {blocks,h:hgt+Math.max(0,list.length-1)*gapE}}
+  const grid=lessons.map(l=>[0,1,2,3,4].map(d=>cellLayout(ents.filter(e=>e.d===d&&e.l===l))));
+  const rowH=grid.map(r=>Math.max(54,...r.map(c=>c.h)));
+  const title=kind==="teacher"?tname(id):short(id)+(homeOf[id]?" · класний кабінет "+homeOf[id]:"");
+  const nChg=ents.filter(e=>e.chg).length;
+  const headH=118,thH=40,H=headH+thH+rowH.reduce((a,b)=>a+b,0)+pad+30;
+  cv.width=W*S;cv.height=H*S;ctx.scale(S,S);
+  ctx.fillStyle=PNGC.bg;ctx.fillRect(0,0,W,H);
+  ctx.textBaseline="top";
+  ctx.fillStyle=PNGC.accent;ctx.font="600 13px "+F;ctx.fillText("КАБІНЕТНА СХЕМА · "+(kind==="teacher"?"УЧИТЕЛЬ":"КЛАС"),pad,pad-4);
+  ctx.fillStyle=PNGC.fg;ctx.font="700 30px "+F;ctx.fillText(title,pad,pad+16);
+  ctx.fillStyle=PNGC.muted;ctx.font="400 15px "+F;
+  ctx.fillText(nChg?`Змінено кабінетів на уроках: ${nChg}. Нові кабінети виділено червоним.`:"Усі уроки — у кабінетах за розкладом.",pad,pad+56);
+  let y=headH;
+  ctx.fillStyle=PNGC.free;ctx.fillRect(pad,y,W-pad*2,thH);
+  ctx.fillStyle=PNGC.muted;ctx.font="600 14px "+F;ctx.fillText("Урок",pad+cp,y+12);
+  DAYS.forEach((n,i)=>ctx.fillText(n,pad+c0+i*cw+cp,y+12));
+  y+=thH;
+  lessons.forEach((l,ri)=>{const rh=rowH[ri];
+    ctx.fillStyle=PNGC.fg;ctx.font="600 15px "+F;ctx.fillText(l+" урок",pad+cp,y+cp+2);
+    grid[ri].forEach((cell,d)=>{let x=pad+c0+d*cw,yy=y;
+      cell.blocks.forEach(bk=>{const e=bk.e;
+        ctx.fillStyle=e.chg?"#FBE9EB":(PNGC.g[e.g]||PNGC.free);ctx.fillRect(x+1,yy+1,cw-2,bk.bh-2);
+        if(e.chg){ctx.fillStyle=PNGC.accent;ctx.fillRect(x+1,yy+1,4,bk.bh-2)}
+        let ty=yy+cp;ctx.fillStyle=PNGC.gi[e.g]||PNGC.fg;ctx.font=fA;bk.la.forEach(s=>{ctx.fillText(s,x+cp,ty);ty+=lhA});
+        ctx.fillStyle=PNGC.fg;ctx.font=fB;bk.lb.forEach(s=>{ctx.fillText(s,x+cp,ty);ty+=lhB});
+        ctx.fillStyle=e.chg?PNGC.accent:PNGC.fg;ctx.font=fR;bk.lr.forEach(s=>{ctx.fillText(s,x+cp,ty);ty+=lhR});
+        ctx.fillStyle=PNGC.muted;ctx.font=fO;bk.lo.forEach(s=>{ctx.fillText(s,x+cp,ty);ty+=18});
+        yy+=bk.bh+gapE});});
+    ctx.strokeStyle=PNGC.line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad,y+rh+.5);ctx.lineTo(W-pad,y+rh+.5);ctx.stroke();
+    y+=rh});
+  ctx.strokeStyle=PNGC.line;ctx.beginPath();for(let i=0;i<=5;i++){const x=pad+c0+i*cw+.5;ctx.moveTo(x,headH);ctx.lineTo(x,y)}ctx.moveTo(pad+.5,headH);ctx.lineTo(pad+.5,y);ctx.stroke();
+  ctx.strokeRect(pad+.5,headH+.5,W-pad*2-1,y-headH-1);
+  return cv;
+}
+const TR={а:"a",б:"b",в:"v",г:"h",ґ:"g",д:"d",е:"e",є:"ie",ж:"zh",з:"z",и:"y",і:"i",ї:"i",й:"i",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"kh",ц:"ts",ч:"ch",ш:"sh",щ:"shch",ь:"",ю:"iu",я:"ia","ʼ":"","’":"","'":""};
+const fileSlug=s=>String(s).split("").map(ch=>{const l=ch.toLowerCase();if(l in TR){const t=TR[l];return ch!==l&&t?t[0].toUpperCase()+t.slice(1):t}return ch}).join("").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"");
+async function downloadPng(kind,id){
+  ui.msg="Готую зображення…";renderHint();
+  if(document.fonts&&document.fonts.status!=="loaded"){try{await document.fonts.ready}catch(e){}}
+  let blob=null;try{const u=buildPng(kind,id).toDataURL("image/png"),bin=atob(u.split(",")[1]),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);blob=new Blob([arr],{type:"image/png"})}catch(e){}
+  if(!blob){ui.msg="Не вдалося створити зображення.";renderHint();return}
+  const name=`kabinety-${fileSlug(kind==="teacher"?tname(id):short(id))}.png`;
+  const r=await saveFile(name,blob);
+  ui.msg=r==="saved"?`Файл ${name} збережено.`:r==="declined"?"Збереження скасовано.":"Зберегти файл тут не вдалося.";renderHint();
+}
+const changedClasses=()=>CLASSES.filter(c=>classItems(c).some(it=>isMoved(it)||!roomOf(it))||(homeOf[c]&&Object.values(ITEMS).some(it=>where[it.key]===homeOf[c]&&it.room!==homeOf[c])));
+function applySide(){layout.classList.toggle("noside",!ui.side);cfgPanel.hidden=!ui.side;sideBtn.setAttribute("aria-expanded",ui.side);sideLbl.textContent=ui.side?"Сховати панель":"Показати панель"}
 function render(){
-  compute();
+  compute();applySide();
   document.querySelectorAll("#mode button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===ui.mode));
-  days.hidden=ui.mode!=="day";roomSel.hidden=ui.mode!=="room";tSel.hidden=ui.mode!=="teacher";cSel.hidden=ui.mode!=="class";
+  days.hidden=ui.mode!=="day";roomSel.hidden=ui.mode!=="room";tSel.hidden=ui.mode!=="teacher";cSel.hidden=ui.mode!=="class";onlyChgLbl.hidden=!(ui.mode==="teacher"||ui.mode==="class");onlyChg.checked=ui.onlyChg;
   copyBtn.textContent=ui.mode==="teacher"?"Копіювати розклад учителя":ui.mode==="class"?"Копіювати для класного керівника":"Копіювати список змін";
   days.querySelectorAll("button").forEach((b,i)=>b.setAttribute("aria-pressed",i===ui.day));
   renderCfg();renderSwap();({day:renderDay,room:renderRoom,load:renderLoad,teacher:renderTeacher,class:renderClass})[ui.mode]();
@@ -612,24 +695,27 @@ baseBtn.onclick=()=>confirmBtn(baseBtn,"Повернутися до основн
 saveBaseBtn.onclick=()=>confirmBtn(saveBaseBtn,"Зробити поточну схему основною","Точно? Натисніть ще раз, щоб замінити основну",async()=>{
   const body={off:plan.off,prot:plan.prot,moves:Object.entries(plan.moves).map(([k,t])=>{const [r,d,l]=k.split("|");return {r,d:+d,l:+l,t}})};
   baseBody=body;try{localStorage.setItem("kab-base",JSON.stringify(body))}catch(e){}
-  const today=new Date().toLocaleDateString("uk-UA",{day:"numeric",month:"long"});baseNote.textContent="Основна схема — розстановка, затверджена "+today+".";
+  
   if(baseDoc){try{await baseDoc.set(Object.assign({savedAt:new Date().toISOString()},body));ui.msg="Поточну схему збережено як основну."}catch(e){ui.msg="Не вдалося зберегти основну схему на сторінці, вона збережена лише в цьому браузері."}}
   else ui.msg="Основну схему збережено лише в цьому браузері.";renderHint()});
 try{const s=JSON.parse(localStorage.getItem("kab-base")||"null");if(s&&Array.isArray(s.off))baseBody=s}catch(e){}
 copyBtn.onclick=()=>{const all=moveList();let txt="";let cur=-1;
   if(ui.mode==="teacher"||ui.mode==="class"){txt=ui.mode==="teacher"?teacherText(ui.t):classText(ui.c);const ok=()=>{ui.msg="Скопійовано.";renderHint()};try{navigator.clipboard.writeText(txt).then(ok,()=>{ui.msg="Не вдалося скопіювати автоматично.";renderHint()})}catch(e){}return}
-  all.forEach(it=>{if(it.d!==cur){cur=it.d;txt+=(txt?"\n":"")+DAYS[cur]+", "+DATES[cur]+"\n"}txt+=`  ${it.l} урок: ${itName(it)} — ${it.room} → ${tag(plan.moves[it.key])}\n`});
+  all.forEach(it=>{if(it.d!==cur){cur=it.d;txt+=(txt?"\n":"")+DAYS[cur]+"\n"}txt+=`  ${it.l} урок: ${itName(it)} — ${it.room} → ${tag(plan.moves[it.key])}\n`});
   if(unplaced.length)txt+="\nБез кабінету:\n"+unplaced.map(it=>`  ${DS[it.d]}, ${it.l} урок: ${itName(it)} (${it.room})`).join("\n")+"\n";
   if(!txt)txt="Переміщень немає.";
   const done=()=>{ui.msg="Список змін скопійовано.";renderHint()};
   const fail=()=>{ui.msg="Не вдалося скопіювати автоматично. Список змін нижче можна виділити вручну.";renderHint()};
   try{navigator.clipboard.writeText(txt).then(done,fail)}catch(e){fail()}};
-days.innerHTML=DS.map((s,i)=>`<button data-d="${i}" aria-pressed="false" title="${DAYS[i]}, ${DATES[i]}">${s} ${DATES[i]}</button>`).join("");
+days.innerHTML=DS.map((s,i)=>`<button data-d="${i}" aria-pressed="false" title="${DAYS[i]}">${s}</button>`).join("");
 days.querySelectorAll("button").forEach(b=>b.onclick=()=>{ui.day=+b.dataset.d;ui.sel=null;ui.msg="";render()});
 document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{ui.mode=b.dataset.m;ui.sel=null;render()});
 roomSel.innerHTML=ROOMS.map(r=>`<option value="${esc(r)}">${esc(tag(r))}</option>`).join("");
 roomSel.value=ui.room;roomSel.onchange=()=>{ui.room=roomSel.value;render()};
-tSel.onchange=()=>{ui.t=tSel.value;render()};cSel.onchange=()=>{ui.c=cSel.value;render()};
+tSel.onchange=()=>{ui.t=tSel.value;render()};
+onlyChg.onchange=()=>{ui.onlyChg=onlyChg.checked;render()};
+sideBtn.onclick=()=>{ui.side=!ui.side;render()};
+view.addEventListener("click",e=>{const b=e.target.closest("[data-png]");if(!b)return;e.stopPropagation();downloadPng(b.dataset.png,b.dataset.png==="teacher"?ui.t:ui.c)},true);cSel.onchange=()=>{ui.c=cSel.value;render()};
 // ---- тема ----
 const hostTheme=document.documentElement.getAttribute("data-theme");
 function applyTheme(t){const root=document.documentElement;
@@ -673,7 +759,7 @@ impParse.onclick=()=>{
   const added=Object.keys(newS).filter(k=>oldS[k]!==newS[k]).length,removed=Object.keys(oldS).filter(k=>oldS[k]!==newS[k]).length;
   const keep=Object.keys(plan.moves).filter(k=>oldS[k]&&oldS[k]===newS[k]).length,all=Object.keys(plan.moves).length;
   pendingImport=p.data;impApply.hidden=!!p.errs.length&&false;impApply.hidden=false;
-  impRes.innerHTML=`Знайдено уроків: <b>${p.count}</b>, кабінетів: <b>${p.data.rooms.length}</b>${p.data.dates?`, тиждень ${p.data.dates[0]}–${p.data.dates[4]}`:""}.<br>
+  impRes.innerHTML=`Знайдено уроків: <b>${p.count}</b>, кабінетів: <b>${p.data.rooms.length}</b>.<br>
     Порівняно з поточним розкладом: нових або змінених уроків — ${added}, змінених або зниклих — ${removed}.<br>
     Переміщень збережеться: <b>${keep}</b> з ${all}${all-keep?`. Решта ${all-keep} стосувалися уроків, яких у новому розкладі вже немає в такому вигляді`:""}.`+
     (p.errs.length?`<br><span class="bad">Застереження (${p.errs.length}): ${esc(p.errs.slice(0,4).join("; "))}${p.errs.length>4?"…":""}</span>`:"")+
@@ -694,9 +780,9 @@ function applyTimetable(data){
   const newS={};D.occ.forEach(([r,d,l,v])=>newS[K(r,d,l)]=sig(v));
   cur.moves=cur.moves.filter(m=>{const k=K(m.r,m.d,m.l);return oldS[k]&&oldS[k]===newS[k]});
   plan=fromBody(cur)||plan;
-  ttNote.textContent=`Розклад: тиждень ${DATES[0]}–${DATES[4]}.`;
+  
   roomSel.innerHTML=ROOMS.map(r=>`<option value="${esc(r)}">${esc(tag(r))}</option>`).join("");roomSel.value=ROOMS.includes(ui.room)?ui.room:ROOMS[0];
-  days.innerHTML=DS.map((s,i)=>`<button data-d="${i}" aria-pressed="false" title="${DAYS[i]}, ${DATES[i]}">${s} ${DATES[i]}</button>`).join("");
+  days.innerHTML=DS.map((s,i)=>`<button data-d="${i}" aria-pressed="false" title="${DAYS[i]}">${s}</button>`).join("");
   days.querySelectorAll("button").forEach(b=>b.onclick=()=>{ui.day=+b.dataset.d;ui.sel=null;ui.msg="";render()});
   render();persist();
 }
@@ -747,12 +833,18 @@ function readCsvPlan(text){
 }
 function showCsv(title,html,{apply=false,text=null}={}){csvPanel.hidden=false;csvTitle.textContent=title;csvRes.innerHTML=html;csvApply.hidden=!apply;csvText.hidden=text==null;if(text!=null){csvText.value=text;csvText.focus();csvText.select()}try{csvPanel.scrollIntoView({block:"nearest"})}catch(e){}}
 csvClose.onclick=()=>{csvPanel.hidden=true;csvPending=null;csvText.value="";csvFile.value=""};
+// SAVEFILE-START
+async function saveFile(name,data){
+  try{const blob=data instanceof Blob?data:new Blob([data],{type:name.endsWith(".csv")?"text/csv;charset=utf-8":"application/octet-stream"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);return "saved"}catch(e){return "fail"}
+}
+// SAVEFILE-END
 csvExp.onclick=async()=>{
-  const csv=buildCsv(),name=`kabinetna-skhema-${DATES[0]}-${DATES[4]}.csv`.replace(/\./g,"-").replace(/-csv$/,".csv");
-  const dl=null;
-  try{const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);ui.msg=`Файл ${name} завантажено.`;renderHint();return}catch(e){}
-  if(dl){try{await dl.save({filename:name,data:csv});ui.msg=`Файл ${name} збережено.`;renderHint();return}
-    catch(e){if(e&&e.code==="declined"){ui.msg="Збереження скасовано.";renderHint();return}}}
+  const csv=buildCsv(),name="kabinetna-skhema.csv";
+  const r=await saveFile(name,csv);
+  if(r==="saved"){ui.msg=`Файл ${name} збережено.`;renderHint();return}
+  if(r==="declined"){ui.msg="Збереження скасовано.";renderHint();return}
   showCsv("Експорт схеми в CSV","Зберегти файл тут не вдалося. Скопіюйте вміст нижче (Ctrl+C) і збережіть як .csv у кодуванні UTF-8.",{text:csv.replace(/^\ufeff/,"")});
 };
 csvFile.onchange=()=>{const f=csvFile.files&&csvFile.files[0];if(!f)return;const fr=new FileReader();
@@ -807,8 +899,8 @@ render();setSync("Підключаю збереження…");
   ttDoc=db.doc("plan/timetable");
   ttDoc.onSnapshot(s=>{if(!s.exists)return;const j=s.data().json;if(!j||j===lastTT)return;
     try{const data=JSON.parse(j);lastTT=j;setData(data);if(rawPlanBody){const p=fromBody(JSON.parse(JSON.stringify(rawPlanBody)));if(p)plan=p}
-      ttNote.textContent=`Розклад: тиждень ${DATES[0]}–${DATES[4]}.`;render()}catch(e){}},()=>{});
-  baseDoc.onSnapshot(s=>{if(s.exists){const b=s.data();if(b&&Array.isArray(b.off)){baseBody={off:b.off,prot:b.prot||[],moves:b.moves||[]};if(b.savedAt){try{baseNote.textContent="Основна схема — розстановка, затверджена "+new Date(b.savedAt).toLocaleDateString("uk-UA",{day:"numeric",month:"long"})+"."}catch(e){}}}}},()=>{});
+      render()}catch(e){}},()=>{});
+  baseDoc.onSnapshot(s=>{if(s.exists){const b=s.data();if(b&&Array.isArray(b.off)){baseBody={off:b.off,prot:b.prot||[],moves:b.moves||[]};}}},()=>{});
   const t=setTimeout(()=>setSync("Сховище поки недоступне, зміни зберігаються в браузері"),10000);
   dbDoc.onSnapshot(snap=>{
     if(!snap.fromCache)clearTimeout(t);
