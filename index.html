@@ -320,7 +320,7 @@ const DEF_PROT=["№20","№21","Спортзал","Майстерня"];
 // items = уроки з розкладу, ключ — їхнє місце в розкладі
 let ITEMS={},splitCount={},homeOf={},TEACHERS=[],CLASSES=[];
 function setData(data){
-  D=data;if(data.dates&&data.dates.length===5)DATES=data.dates;
+  D=normTeachers(data);if(data.dates&&data.dates.length===5)DATES=data.dates;
   ROOMS=[...new Set([...D.rooms,...Object.keys(INFO).filter(r=>INFO[r][1]!=="n")])].sort((a,b)=>rkey(a)-rkey(b)||a.localeCompare(b));
   ITEMS={};D.occ.forEach(([r,d,l,v])=>{ITEMS[K(r,d,l)]={key:K(r,d,l),room:r,d,l,v}});
   splitCount={};D.occ.forEach(([r,d,l,v])=>v.forEach(([c])=>{const k=c+"|"+d+"|"+l;splitCount[k]=(splitCount[k]||0)+1}));
@@ -330,8 +330,15 @@ function setData(data){
   TEACHERS=[...new Set(D.occ.flatMap(([,,,v])=>v.map(x=>x[2]).filter(Boolean)))].sort((a,b)=>tname(a).localeCompare(tname(b),"uk"));
   CLASSES=[...new Set(D.occ.flatMap(([,,,v])=>v.map(x=>x[0])))].sort((a,b)=>grade(a)-grade(b)||a.localeCompare(b,"uk"));
 }
-const FULLNAME={"Андрей":"Андрейченко Л.Є.","Пашник":"Пашник Т.М.","Яремчу":"Яремчук І.М.","Носура":"Носурак І.В.","Бойчук":"Бойчук","Федора":"Федорак","Гриджу":"Гриджук В."};
-const tname=t=>FULLNAME[t]||t;
+// Прізвища з ініціалами: «Нова школа» обрізає прізвища до 6 літер
+const STAFF={"Андрей": "Андрейченко Л.Є.", "Бойцан": "Бойцан Л.В.", "Бойчук": "Бойчук М.Ю.", "Боледз": "Боледзюк І.С.", "Ванько": "Ванькович Х.С.", "Василь": "Василькова І.В.", "Вовк М": "Вовк М.В.", "Гриджу": "Гриджук В.Д.", "Грицан": "Грицанюк Г.М.", "Дзвінч": "Дзвінчук Т.Ю.", "Ільків": "Ільків Н.В.", "Кольцю": "Кольцюк В.Д.", "Кох А.": "Кох А.С.", "Кривюк": "Кривюк Л.М.", "Кудиба": "Кудиба Л.Б.", "Лазор": "Лазор О.Я.", "Лукавс": "Лукавська В.В.", "Матков": "Матковська Л.М.", "Матійч": "Матійчук М.М.", "Носура": "Носурак І.В.", "Пастуш": "Пастушак Р.В.", "Пашко": "Пашко Т.М.", "Пашник": "Пашник Т.М.", "Перцов": "Перцович Д.Н.", "Петран": "Петранюк У.В.", "Сембра": "Сембратович Л.В.", "Титик": "Титик С.Г.", "Федора": "Федорак О.І.", "Філоне": "Філоненко І.М.", "Яремчу": "Яремчук І.М."};
+function staffFull(code,subj,cls){
+  if(code==="Задемл")return /^Інф/.test(subj)?"Задемленюк О.В.":"Задемленюк І.Т.";
+  if(code==="Ткачук")return (!/^1[01]-/.test(cls)||/^ГрОс/.test(subj))?"Ткачук О.Є.":"Ткачук В.М.";
+  return STAFF[code]||null}
+const initials=full=>{const p=full.split(/\s+/);return p[0]+(p.length>1?" "+p.slice(1).map(x=>x[0]+".").join(""):"")};
+function normTeachers(data){data.occ.forEach(([r,d,l,v])=>v.forEach(x=>{const f=staffFull(x[2],x[1],x[0]);if(f)x[2]=f}));return data}
+const tname=t=>t;
 setData(D);
 
 const ui={side:true,onlyChg:false,showOff:false,mode:"day",day:(()=>{const g=new Date().getDay();return g>=1&&g<=5?g-1:0})(),room:"№29",sel:null,msg:""};
@@ -415,9 +422,21 @@ function renderDay(){
     h+="</tr>"});
   view.innerHTML=h+"</tbody></table></div>";
 }
+function fillRoomSel(){
+  const on=ROOMS.filter(r=>!plan.off.includes(r)),off=ROOMS.filter(r=>plan.off.includes(r));
+  roomSel.innerHTML=`<optgroup label="Працюють">${on.map(r=>`<option value="${esc(r)}">${esc(tag(r))}</option>`).join("")}</optgroup>`+(off.length?`<optgroup label="Вимкнені">${off.map(r=>`<option value="${esc(r)}">${esc(tag(r))} — вимкнено</option>`).join("")}</optgroup>`:"");
+  if(!ROOMS.includes(ui.room))ui.room=on[0]||ROOMS[0];roomSel.value=ui.room;
+}
 function renderRoom(){
+  fillRoomSel();
   const r=ui.room;
-  let h=`<div class="tablebox"><table class="week"><thead><tr><th class="room">Урок</th>`;
+  const intro=`<div class="panel"><h2>${esc(tag(r))}${plan.off.includes(r)?" · вимкнено":""}</h2><p class="note" style="margin:0">`;
+  if(plan.off.includes(r)){
+    const its=Object.values(ITEMS).filter(it=>it.room===r).sort((a,b)=>a.d-b.d||a.l-b.l);
+    view.innerHTML=intro+(its.length?`Кабінет закритий. За розкладом у ньому ${its.length} уроків на тиждень. Нижче видно, де вони проходять тепер.</p><div class="mlist">${its.map(it=>`<div class="mv-row ${where[it.key]?"":"nope"}"><span class="rl">${DS[it.d]}, ${it.l} ур.</span><span>${esc(itName(it))}</span><span class="rn">${where[it.key]?"→ "+esc(tag(where[it.key])):"без кабінету"}</span></div>`).join("")}</div></div>`
+      :`Кабінет закритий. За розкладом уроків у ньому немає, тож переносити нічого не треба.</p></div>`);
+    return}
+  let h=intro+`Розклад цього кабінету на тиждень: хто й коли в ньому працює з урахуванням переміщень. Порожні клітинки — кабінет вільний.</p></div><div class="tablebox"><table class="week"><thead><tr><th class="room">Урок</th>`;
   DAYS.forEach(n=>h+=`<th><span class="n">${n}</span></th>`);
   h+="</tr></thead><tbody>";
   L.forEach(l=>{h+=`<tr><th class="room" scope="row"><span class="rn">${l} урок</span></th>`;
