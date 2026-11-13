@@ -430,7 +430,7 @@ function fillRoomSel(){
 function renderRoom(){
   fillRoomSel();
   const r=ui.room;
-  const intro=`<div class="panel"><h2>${esc(tag(r))}${plan.off.includes(r)?" · вимкнено":""}</h2><p class="note" style="margin:0">`;
+  const intro=`<div class="panel"><div class="phead"><h2>${esc(tag(r))}${plan.off.includes(r)?" · вимкнено":""}</h2><button class="btn ghost" data-png="room">Завантажити PNG</button></div><p class="note" style="margin:0">`;
   if(plan.off.includes(r)){
     const its=Object.values(ITEMS).filter(it=>it.room===r).sort((a,b)=>a.d-b.d||a.l-b.l);
     view.innerHTML=intro+(its.length?`Кабінет закритий. За розкладом у ньому ${its.length} уроків на тиждень. Нижче видно, де вони проходять тепер.</p><div class="mlist">${its.map(it=>`<div class="mv-row ${where[it.key]?"":"nope"}"><span class="rl">${DS[it.d]}, ${it.l} ур.</span><span>${esc(itName(it))}</span><span class="rn">${where[it.key]?"→ "+esc(tag(where[it.key])):"без кабінету"}</span></div>`).join("")}</div></div>`
@@ -604,6 +604,11 @@ function classText(c){const home=homeOf[c];let s=`${short(c)} — зміни к�
 const PNGC={bg:"#FFFFFF",fg:"#1B2320",muted:"#5F6B66",line:"#DDE2DE",accent:"#8A1F2E",free:"#F3F5F2",
   g:{5:"#E3EEFB",6:"#E2F4EC",7:"#FBF0DA",8:"#F1E6F8",9:"#FCE6DE",10:"#E1F2F4",11:"#ECEBE3"},gi:{5:"#2F5F9E",6:"#2C7A57",7:"#93650F",8:"#6D3E92",9:"#A4452B",10:"#1F6E78",11:"#5E5A44"}};
 function pngEntries(kind,id){
+  if(kind==="room"){const off=plan.off.includes(id);
+    const its=Object.values(ITEMS).filter(it=>off?it.room===id:where[it.key]===id).sort((a,b)=>a.d-b.d||a.l-b.l);
+    return its.map(it=>{const cl=[...new Set(it.v.map(x=>short(x[0])))].join(" + "),sub=[...new Set(it.v.map(x=>x[1]))].join(" / "),tc=[...new Set(it.v.map(x=>tname(x[2])).filter(Boolean))].join(", ");
+      if(off){const r=where[it.key];return {d:it.d,l:it.l,g:grade(it.v[0][0]),a:cl,b:sub+(tc?" · "+tc:""),room:r?"→ "+tag(r):"без кабінету",old:null,chg:true}}
+      const mv=it.room!==id;return {d:it.d,l:it.l,g:grade(it.v[0][0]),a:cl,b:sub+(tc?" · "+tc:""),room:mv?"з "+it.room:"",old:null,chg:mv}});}
   const its=kind==="teacher"?teacherItems(id):classItems(id);
   return its.map(it=>{const r=roomOf(it),mv=isMoved(it);
     const a=kind==="teacher"?[...new Set(it.v.filter(x=>x[2]===id).map(x=>short(x[0])))].join(" + "):it.v.find(x=>x[0]===id)[1];
@@ -625,16 +630,16 @@ function buildPng(kind,id){
     return {blocks,h:hgt+Math.max(0,list.length-1)*gapE}}
   const grid=lessons.map(l=>[0,1,2,3,4].map(d=>cellLayout(ents.filter(e=>e.d===d&&e.l===l))));
   const rowH=grid.map(r=>Math.max(54,...r.map(c=>c.h)));
-  const title=kind==="teacher"?tname(id):short(id)+(homeOf[id]?" · класний кабінет "+homeOf[id]:"");
+  const title=kind==="room"?tag(id)+(plan.off.includes(id)?" · вимкнено":""):kind==="teacher"?tname(id):short(id)+(homeOf[id]?" · класний кабінет "+homeOf[id]:"");
   const nChg=ents.filter(e=>e.chg).length;
   const headH=118,thH=40,H=headH+thH+rowH.reduce((a,b)=>a+b,0)+pad+30;
   cv.width=W*S;cv.height=H*S;ctx.scale(S,S);
   ctx.fillStyle=PNGC.bg;ctx.fillRect(0,0,W,H);
   ctx.textBaseline="top";
-  ctx.fillStyle=PNGC.accent;ctx.font="600 13px "+F;ctx.fillText("КАБІНЕТНА СХЕМА · "+(kind==="teacher"?"УЧИТЕЛЬ":"КЛАС"),pad,pad-4);
+  ctx.fillStyle=PNGC.accent;ctx.font="600 13px "+F;ctx.fillText("КАБІНЕТНА СХЕМА · "+(kind==="teacher"?"УЧИТЕЛЬ":kind==="room"?"КАБІНЕТ":"КЛАС"),pad,pad-4);
   ctx.fillStyle=PNGC.fg;ctx.font="700 30px "+F;ctx.fillText(title,pad,pad+16);
   ctx.fillStyle=PNGC.muted;ctx.font="400 15px "+F;
-  ctx.fillText(nChg?`Змінено кабінетів на уроках: ${nChg}. Нові кабінети виділено червоним.`:"Усі уроки — у кабінетах за розкладом.",pad,pad+56);
+  ctx.fillText(kind==="room"?(plan.off.includes(id)?`Кабінет закритий. Уроки за розкладом (${ents.length}) і куди їх перенесено.`:`Уроків на тиждень: ${ents.length}. Порожні клітинки — кабінет вільний.`+(nChg?` Перенесені сюди уроки (${nChg}) виділено червоним.`:"")):nChg?`Змінено кабінетів на уроках: ${nChg}. Нові кабінети виділено червоним.`:"Усі уроки — у кабінетах за розкладом.",pad,pad+56);
   let y=headH;
   ctx.fillStyle=PNGC.free;ctx.fillRect(pad,y,W-pad*2,thH);
   ctx.fillStyle=PNGC.muted;ctx.font="600 14px "+F;ctx.fillText("Урок",pad+cp,y+12);
@@ -664,7 +669,7 @@ async function downloadPng(kind,id){
   if(document.fonts&&document.fonts.status!=="loaded"){try{await document.fonts.ready}catch(e){}}
   let blob=null;try{const u=buildPng(kind,id).toDataURL("image/png"),bin=atob(u.split(",")[1]),arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);blob=new Blob([arr],{type:"image/png"})}catch(e){}
   if(!blob){ui.msg="Не вдалося створити зображення.";renderHint();return}
-  const name=`kabinety-${fileSlug(kind==="teacher"?tname(id):short(id))}.png`;
+  const name=kind==="room"?`kabinet-${fileSlug(tag(id))}.png`:`kabinety-${fileSlug(kind==="teacher"?tname(id):short(id))}.png`;
   const r=await saveFile(name,blob);
   ui.msg=r==="saved"?`Файл ${name} збережено.`:r==="declined"?"Збереження скасовано.":"Зберегти файл тут не вдалося.";renderHint();
 }
@@ -734,7 +739,7 @@ roomSel.value=ui.room;roomSel.onchange=()=>{ui.room=roomSel.value;render()};
 tSel.onchange=()=>{ui.t=tSel.value;render()};
 onlyChg.onchange=()=>{ui.onlyChg=onlyChg.checked;render()};
 sideBtn.onclick=()=>{ui.side=!ui.side;render()};
-view.addEventListener("click",e=>{const b=e.target.closest("[data-png]");if(!b)return;e.stopPropagation();downloadPng(b.dataset.png,b.dataset.png==="teacher"?ui.t:ui.c)},true);cSel.onchange=()=>{ui.c=cSel.value;render()};
+view.addEventListener("click",e=>{const b=e.target.closest("[data-png]");if(!b)return;e.stopPropagation();downloadPng(b.dataset.png,b.dataset.png==="teacher"?ui.t:b.dataset.png==="room"?ui.room:ui.c)},true);cSel.onchange=()=>{ui.c=cSel.value;render()};
 // ---- тема ----
 const hostTheme=document.documentElement.getAttribute("data-theme");
 function applyTheme(t){const root=document.documentElement;
